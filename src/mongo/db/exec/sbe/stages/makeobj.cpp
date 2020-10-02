@@ -212,8 +212,7 @@ const SpecificStats* MakeObjStage::getSpecificStats() const {
 }
 
 std::vector<DebugPrinter::Block> MakeObjStage::debugPrint() const {
-    std::vector<DebugPrinter::Block> ret;
-    DebugPrinter::addKeyword(ret, "mkobj");
+    std::vector<DebugPrinter::Block> ret = PlanStage::debugPrint();
 
     DebugPrinter::addIdentifier(ret, _objSlot);
 

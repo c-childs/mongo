@@ -280,16 +280,11 @@ const SpecificStats* ScanStage::getSpecificStats() const {
 }
 
 std::vector<DebugPrinter::Block> ScanStage::debugPrint() const {
-    std::vector<DebugPrinter::Block> ret;
+    std::vector<DebugPrinter::Block> ret = PlanStage::debugPrint();
 
     if (_seekKeySlot) {
-        DebugPrinter::addKeyword(ret, "seek");
-
         DebugPrinter::addIdentifier(ret, _seekKeySlot.get());
-    } else {
-        DebugPrinter::addKeyword(ret, "scan");
     }
-
 
     if (_recordSlot) {
         DebugPrinter::addIdentifier(ret, _recordSlot.get());
@@ -315,6 +310,12 @@ std::vector<DebugPrinter::Block> ScanStage::debugPrint() const {
     DebugPrinter::addIdentifier(ret, _name.toString());
     ret.emplace_back("`\"");
 
+    // Add forward flag.
+    if (_forward) {
+        DebugPrinter::addKeyword(ret, "true");
+    } else {
+        DebugPrinter::addKeyword(ret, "false");
+    }
     return ret;
 }
 

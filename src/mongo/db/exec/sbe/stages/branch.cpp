@@ -181,9 +181,7 @@ const SpecificStats* BranchStage::getSpecificStats() const {
 }
 
 std::vector<DebugPrinter::Block> BranchStage::debugPrint() const {
-    std::vector<DebugPrinter::Block> ret;
-    DebugPrinter::addKeyword(ret, "branch");
-
+    std::vector<DebugPrinter::Block> ret = PlanStage::debugPrint();
     ret.emplace_back("{`");
     DebugPrinter::addBlocks(ret, _filter->debugPrint());
     ret.emplace_back("`}");

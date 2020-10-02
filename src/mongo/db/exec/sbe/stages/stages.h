@@ -273,7 +273,15 @@ public:
      */
     virtual void close() = 0;
 
-    virtual std::vector<DebugPrinter::Block> debugPrint() const = 0;
+    virtual std::vector<DebugPrinter::Block> debugPrint() const {
+        std::vector<DebugPrinter::Block> ret;
+        std::stringstream ss;
+        auto stats = getCommonStats();
+        ss << "[" << stats->nodeId << "] ";
+        ss << stats->stageType;
+        ret.emplace_back(ss.str());
+        return ret;
+    }
 
     friend class CanSwitchOperationContext;
     friend class CanChangeState;

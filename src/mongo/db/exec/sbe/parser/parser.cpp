@@ -60,10 +60,12 @@ static std::string format_error_message(size_t ln, size_t col, const std::string
 
 static constexpr auto kSyntax = R"(
                 ROOT <- OPERATOR
-                OPERATOR <- SCAN / PSCAN / SEEK / IXSCAN / IXSEEK / PROJECT / FILTER / CFILTER /
+                OPERATOR <- ('['([0-9])+']')? (SCAN / PSCAN / SEEK / IXSCAN / IXSEEK / PROJECT / FILTER / CFILTER /
                             MKOBJ / GROUP / HJOIN / NLJOIN / LIMIT / SKIP / COSCAN / TRAVERSE /
                             EXCHANGE / SORT / UNWIND / UNION / BRANCH / SIMPLE_PROJ / PFO /
-                            ESPOOL / LSPOOL / CSPOOL / SSPOOL
+                            ESPOOL / LSPOOL / CSPOOL / SSPOOL)
+
+                # NODE_ID <- < '['([0-9])+']' >
 
                 FORWARD_FLAG <- <'true'> / <'false'>
 
@@ -83,6 +85,7 @@ static constexpr auto kSyntax = R"(
                                IDENT? # optional variable name of the record id delivered by the scan
                                IDENT_LIST_WITH_RENAMES  # list of projected fields (may be empty)
                                IDENT # collection name to scan
+                               FORWARD_FLAG
 
                 IXSCAN <- 'ixscan' IDENT? # optional variable name of the root object (record) delivered by the scan
                                    IDENT? # optional variable name of the record id delivered by the scan
@@ -110,9 +113,11 @@ static constexpr auto kSyntax = R"(
 
                 FILTER <- 'filter' '{' EXPR '}' OPERATOR
                 CFILTER <- 'cfilter' '{' EXPR '}' OPERATOR
-                MKOBJ <- 'mkobj' IDENT (IDENT IDENT_LIST)? IDENT_LIST_WITH_RENAMES OPERATOR
-                GROUP <- 'group' IDENT_LIST PROJECT_LIST OPERATOR
-                HJOIN <- 'hj' LEFT RIGHT
+                MKOBJ <- 'mkobj'  IDENT (IDENT IDENT_LIST)? IDENT_LIST_WITH_RENAMES FORCE_NEW_OBJ_FLAG RET_OLD_OBJ_FLAG OPERATOR
+                FORCE_NEW_OBJ_FLAG <- <'true'> / <'false'>
+                RET_OLD_OBJ_FLAG <- <'true'> / <'false'>
+                GROUP <- 'group'  IDENT_LIST PROJECT_LIST OPERATOR
+                HJOIN <- 'hj'  LEFT RIGHT
                 LEFT <- 'left' IDENT_LIST IDENT_LIST OPERATOR
                 RIGHT <- 'right' IDENT_LIST IDENT_LIST OPERATOR
 
@@ -122,9 +127,9 @@ static constexpr auto kSyntax = R"(
                                 'left' OPERATOR # outer side
                                 'right' OPERATOR # inner side
 
-                LIMIT <- 'limit' NUMBER OPERATOR
-                SKIP <- 'skip' NUMBER NUMBER? OPERATOR
-                COSCAN <- 'coscan'
+                LIMIT <- 'limit'  NUMBER OPERATOR
+                SKIP <- 'skip'  NUMBER NUMBER? OPERATOR
+                COSCAN <- 'coscan' 
                 TRAVERSE <- 'traverse' IDENT # output of traverse
                                        IDENT # output of traverse as seen inside the 'in' branch
                                        IDENT # input of traverse
@@ -132,11 +137,11 @@ static constexpr auto kSyntax = R"(
                                        ('{' EXPR '}')? # optional final expression
                                        'from' OPERATOR
                                        'in' OPERATOR
-                EXCHANGE <- 'exchange' IDENT_LIST NUMBER IDENT OPERATOR
-                SORT <- 'sort' IDENT_LIST IDENT_LIST OPERATOR
-                UNWIND <- 'unwind' IDENT IDENT IDENT UNWIND_FLAG OPERATOR
+                EXCHANGE <- 'exchange'  IDENT_LIST NUMBER IDENT OPERATOR
+                SORT <- 'sort'  IDENT_LIST IDENT_LIST OPERATOR
+                UNWIND <- 'unwind'  IDENT IDENT IDENT UNWIND_FLAG OPERATOR
                 UNWIND_FLAG <- <'true'> / <'false'>
-                UNION <- 'union' IDENT_LIST UNION_BRANCH_LIST
+                UNION <- 'union'  IDENT_LIST UNION_BRANCH_LIST
 
                 UNION_BRANCH_LIST <- '[' (UNION_BRANCH (',' UNION_BRANCH)* )?']'
                 UNION_BRANCH <- IDENT_LIST OPERATOR
@@ -194,7 +199,7 @@ static constexpr auto kSyntax = R"(
                 MUL_EXPR <- PRIMARY_EXPR MUL_TOK MUL_EXPR / PRIMARY_EXPR
                 MUL_TOK <- <'*'> / <'/'>
 
-                PRIMARY_EXPR <- '(' EXPR ')' / CONST_TOK / IF_EXPR / LET_EXPR / FUN_CALL / IDENT / NUMBER / STRING
+                PRIMARY_EXPR <- '(' EXPR ')' / CONST_TOK / IF_EXPR / LET_EXPR / FUN_CALL / IDENT / NUMBER / STRING 
                 CONST_TOK <- <'true'> / <'false'> / <'null'> / <'#'>
 
                 IF_EXPR <- 'if' '(' EXPR ',' EXPR ',' EXPR ')'
@@ -598,16 +603,16 @@ void Parser::walkSeek(AstQuery& ast) {
     std::string collName;
     int projectsPos;
 
-    if (ast.nodes.size() == 5) {
+    if (ast.nodes.size() == 6) {
         recordName = std::move(ast.nodes[1]->identifier);
         recordIdName = std::move(ast.nodes[2]->identifier);
         projectsPos = 3;
         collName = std::move(ast.nodes[4]->identifier);
-    } else if (ast.nodes.size() == 4) {
+    } else if (ast.nodes.size() == 5) {
         recordName = std::move(ast.nodes[1]->identifier);
         projectsPos = 2;
         collName = std::move(ast.nodes[3]->identifier);
-    } else if (ast.nodes.size() == 3) {
+    } else if (ast.nodes.size() == 4) {
         projectsPos = 1;
         collName = std::move(ast.nodes[2]->identifier);
     } else {
@@ -624,7 +629,7 @@ void Parser::walkSeek(AstQuery& ast) {
                                  lookupSlot(recordIdName),
                                  ast.nodes[projectsPos]->identifiers,
                                  lookupSlots(ast.nodes[projectsPos]->renames),
-                                 lookupSlot(ast.nodes[0]->identifier),
+                                 lookupSlot(ast.nodes[1]->identifier),
                                  true /* forward */,
                                  nullptr,
                                  nullptr,

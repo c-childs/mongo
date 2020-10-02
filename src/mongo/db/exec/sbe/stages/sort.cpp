@@ -219,8 +219,7 @@ const SpecificStats* SortStage::getSpecificStats() const {
 }
 
 std::vector<DebugPrinter::Block> SortStage::debugPrint() const {
-    std::vector<DebugPrinter::Block> ret;
-    DebugPrinter::addKeyword(ret, "sort");
+    std::vector<DebugPrinter::Block> ret = PlanStage::debugPrint();
 
     ret.emplace_back(DebugPrinter::Block("[`"));
     for (size_t idx = 0; idx < _obs.size(); ++idx) {

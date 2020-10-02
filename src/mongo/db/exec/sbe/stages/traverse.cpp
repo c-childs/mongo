@@ -273,8 +273,7 @@ const SpecificStats* TraverseStage::getSpecificStats() const {
 }
 
 std::vector<DebugPrinter::Block> TraverseStage::debugPrint() const {
-    std::vector<DebugPrinter::Block> ret;
-    DebugPrinter::addKeyword(ret, "traverse");
+    std::vector<DebugPrinter::Block> ret = PlanStage::debugPrint();
 
     DebugPrinter::addIdentifier(ret, _outField);
     DebugPrinter::addIdentifier(ret, _outFieldInner);

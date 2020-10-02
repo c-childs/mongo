@@ -137,8 +137,7 @@ const SpecificStats* CheckBoundsStage::getSpecificStats() const {
 }
 
 std::vector<DebugPrinter::Block> CheckBoundsStage::debugPrint() const {
-    std::vector<DebugPrinter::Block> ret;
-    DebugPrinter::addKeyword(ret, "chkbounds");
+    std::vector<DebugPrinter::Block> ret = PlanStage::debugPrint();
 
     DebugPrinter::addIdentifier(ret, _inKeySlot);
     DebugPrinter::addIdentifier(ret, _inRecordIdSlot);
