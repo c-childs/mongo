@@ -629,7 +629,7 @@ void Parser::walkSeek(AstQuery& ast) {
                                  lookupSlot(recordIdName),
                                  ast.nodes[projectsPos]->identifiers,
                                  lookupSlots(ast.nodes[projectsPos]->renames),
-                                 lookupSlot(ast.nodes[1]->identifier),
+                                 lookupSlot(ast.nodes[0]->identifier),
                                  true /* forward */,
                                  nullptr,
                                  nullptr,
